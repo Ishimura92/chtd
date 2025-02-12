@@ -1,0 +1,38 @@
+URUCHOMIENIE PROJEKTU CHTD
+==========================
+
+1. URUCHOMIENIE ŚRODOWISKA
+-------------------------
+# Przejdź do głównego katalogu projektu
+cd chtd
+
+# Uruchom wszystkie kontenery
+docker compose up -d
+
+
+2. SPRAWDZENIE STATUSU
+---------------------
+# Sprawdź czy wszystkie kontenery działają
+docker compose ps
+
+
+3. DOSTĘP DO APLIKACJI
+---------------------
+Frontend: http://localhost:5173
+Backend: http://localhost:8000
+
+
+4. ROZWIĄZYWANIE PROBLEMÓW
+-------------------------
+# Zobacz logi wszystkich kontenerów
+docker compose logs
+
+# Zobacz logi konkretnego kontenera
+docker compose logs app      # backend
+docker compose logs frontend # frontend
+
+
+5. ZATRZYMANIE ŚRODOWISKA
+------------------------
+# Zatrzymaj wszystkie kontenery
+docker compose down 
