@@ -58,7 +58,9 @@ class FriendshipController extends Controller
                 'id' => $friend->id,
                 'name' => $friend->name,
                 'surname' => $friend->surname,
-                'avatar' => $friend->avatar_url
+                'avatar' => $friend->avatar_url,
+                'birth_date' => $friend->birth_date,
+                'name_day_date' => $friend->name_day_date
             ];
         });
 

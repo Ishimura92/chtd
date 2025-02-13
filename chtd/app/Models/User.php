@@ -72,6 +72,13 @@ class User extends Authenticatable
         return $this->hasMany(Friendship::class, 'user_id_2');
     }
 
+    // Wszystkie znajomości (jako user1 lub user2)
+    public function friendships()
+    {
+        return $this->hasMany(Friendship::class, 'user_id_1')
+            ->orWhere('user_id_2', $this->id);
+    }
+
     public function hasReceivedFriendRequestFrom(User $user): bool
     {
         return $this->friendshipRequestsReceived()

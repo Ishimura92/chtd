@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Present;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -11,9 +12,17 @@ class PresentController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
-        $presents = auth()->user()->presents()->orderBy('created_at', 'desc')->get();
+        $userId = $request->query('user_id', auth()->id());
+        
+        $targetUser = User::findOrFail($userId);
+        $this->authorize('viewAny', [Present::class, $targetUser]);
+        
+        $presents = Present::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
         return response()->json(['presents' => $presents]);
     }
 
