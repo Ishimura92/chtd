@@ -4,10 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Friendship;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+    private ImageService $imageService;
+    
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function search(Request $request)
     {
         $query = $request->get('q');
@@ -82,13 +90,17 @@ class UserController extends Controller
                 return response()->json(['error' => 'Przesłany plik jest uszkodzony'], 422);
             }
 
-            $path = $file->store('avatars', 'public');
-            \Log::info('Plik zapisany', ['path' => $path]);
+            // Użyj serwisu do optymalizacji i zapisania avatara
+            $path = $this->imageService->optimizeAndSave(
+                $file,
+                'avatars',
+                'public',
+                300, // mniejszy rozmiar dla avatarów
+                300,
+                85  // trochę wyższa jakość dla avatarów
+            );
             
-            if (!$path) {
-                \Log::error('Nie udało się zapisać pliku');
-                return response()->json(['error' => 'Nie udało się zapisać pliku'], 500);
-            }
+            \Log::info('Plik zapisany', ['path' => $path]);
 
             $user = auth()->user();
             $oldAvatarUrl = $user->avatar_url;

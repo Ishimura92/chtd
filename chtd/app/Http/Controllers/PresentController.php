@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Present;
 use App\Models\User;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -11,6 +12,13 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class PresentController extends Controller
 {
     use AuthorizesRequests;
+
+    private ImageService $imageService;
+    
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
 
     public function index(Request $request)
     {
@@ -124,7 +132,7 @@ class PresentController extends Controller
                 'image' => [
                     'required',
                     'image',
-                    'max:2048', // max 2MB
+                    'max:5120', // max 5MB
                     'mimes:jpeg,png,jpg,gif'
                 ]
             ]);
@@ -133,11 +141,15 @@ class PresentController extends Controller
                 return response()->json(['error' => 'Przesłany plik jest uszkodzony'], 422);
             }
 
-            $path = $request->file('image')->store('presents', 'public');
-            
-            if (!$path) {
-                return response()->json(['error' => 'Nie udało się zapisać pliku'], 500);
-            }
+            // Użyj serwisu do optymalizacji i zapisania zdjęcia prezentu
+            $path = $this->imageService->optimizeAndSave(
+                $request->file('image'),
+                'presents',
+                'public',
+                500, // większy rozmiar dla zdjęć prezentów
+                500,
+                80  // standardowa jakość
+            );
 
             return response()->json([
                 'url' => asset('storage/' . $path)
