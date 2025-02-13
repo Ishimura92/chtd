@@ -5,7 +5,7 @@ import RegisterView from '../views/RegisterView.vue'
 import LoginView from '../views/LoginView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import FindFriendsView from '@/views/FindFriendsView.vue'
-import WantedPresentsTab from '@/components/dashboard/tabs/WantedPresentsTab.vue'
+import WantsTab from '@/components/dashboard/tabs/WantsTab.vue'
 import SettingsTab from '@/components/dashboard/tabs/SettingsTab.vue'
 import IdeasTab from '@/components/dashboard/tabs/IdeasTab.vue'
 import KidsTab from '@/components/dashboard/tabs/KidsTab.vue'
@@ -24,12 +24,24 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
-      meta: { 
-        isGuestOnly: true,
-        title: 'Strona główna'
-      }
+      component: () => import("../layouts/DefaultLayout.vue"),
+      children: [
+        {
+          path: '',
+          name: 'home',
+          component: () => import('@/views/DashboardView.vue')
+        }
+      ]
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue')
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/RegisterView.vue')
     },
     {
       path: '/about',
@@ -38,24 +50,6 @@ const router = createRouter({
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: RegisterView,
-      meta: { 
-        isGuestOnly: true,
-        title: 'Rejestracja'
-      }
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: LoginView,
-      meta: { 
-        isGuestOnly: true,
-        title: 'Logowanie'
-      }
     },
     {
       path: '/dashboard',
@@ -67,13 +61,11 @@ const router = createRouter({
       },
       children: [
         {
-          path: '',
-          redirect: { name: 'wanted-presents' }
-        },
-        {
           path: 'wanted-presents',
           name: 'wanted-presents',
-          component: WantedPresentsTab
+          component: WantsTab,
+          props: true,
+          alias: ''
         },
         {
           path: 'ideas-for-others',

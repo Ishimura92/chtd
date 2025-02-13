@@ -3,11 +3,14 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { useFriendsStore } from '@/stores/friends'
 import { useToast } from '@/components/ui/toast/use-toast'
+import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
 
 const props = defineProps<{
   id: number
   name: string
   avatar?: string
+  surname: string
+  avatar_url?: string
 }>()
 
 const friends = useFriendsStore()
@@ -48,10 +51,12 @@ async function handleReject() {
 
 <template>
   <div class="flex items-center gap-3">
-    <Avatar class="h-10 w-10">
-      <AvatarImage :src="avatar" />
-      <AvatarFallback>{{ name[0] }}</AvatarFallback>
-    </Avatar>
+    <UserAvatar
+      :name="name"
+      :surname="surname"
+      :avatar-url="avatar || avatar_url"
+      className="h-10 w-10"
+    />
     <div class="flex-1">
       <div class="font-medium">{{ name }}</div>
     </div>

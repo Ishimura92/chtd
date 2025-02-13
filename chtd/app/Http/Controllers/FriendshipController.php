@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Friendship;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class FriendshipController extends Controller
@@ -58,7 +59,7 @@ class FriendshipController extends Controller
                 'id' => $friend->id,
                 'name' => $friend->name,
                 'surname' => $friend->surname,
-                'avatar' => $friend->avatar_url,
+                'avatar_url' => $friend->avatar_url,
                 'birth_date' => $friend->birth_date,
                 'name_day_date' => $friend->name_day_date
             ];
@@ -123,5 +124,29 @@ class FriendshipController extends Controller
         $friendship->delete();
 
         return response()->json(['message' => 'Znajomy został usunięty']);
+    }
+
+    public function searchUsers(Request $request)
+    {
+        $query = $request->get('query');
+        
+        $users = User::where('id', '!=', auth()->id())
+            ->where(function($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                  ->orWhere('surname', 'like', "%{$query}%");
+            })
+            ->select(['id', 'name', 'surname', 'avatar_url'])
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'surname' => $user->surname,
+                    'avatar_url' => $user->avatar_url,
+                    'friendshipStatus' => $this->getFriendshipStatus($user->id)
+                ];
+            });
+        
+        return response()->json($users);
     }
 } 

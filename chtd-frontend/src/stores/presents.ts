@@ -1,126 +1,183 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import axios from '@/lib/axios'
+import customAxios from '@/lib/axios'
+import axios, { isAxiosError } from 'axios'
+import type { AxiosError } from 'axios'
 import { useToast } from '@/components/ui/toast/use-toast'
+import { useAuthStore } from '@/stores/auth'
+import type { Present, PresentFormData } from '@/types/presents'
 
-interface Present {
-  id: number
-  name: string
-  url: string
-  image_url?: string
-  price?: number
-  description?: string
-  created_at: string
-  updated_at: string
-}
-
-interface PresentFormData {
-  name: string
-  url: string
-  image_url?: string
-  price?: number
-  description?: string
-}
-
-export const usePresentsStore = defineStore('presents', () => {
-  const presents = ref<Present[]>([])
-  const { toast } = useToast()
-
-  async function fetchPresents() {
-    try {
-      const response = await axios.get('/presents')
-      presents.value = response.data.presents
-    } catch (e) {
-      console.error('Error fetching presents:', e)
-      toast({
-        title: 'Błąd',
-        description: 'Nie udało się pobrać listy prezentów',
-        variant: 'destructive'
-      })
-    }
-  }
-
-  async function addPresent(present: any) {
-    try {
-      const response = await axios.post('/presents', present, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+export const usePresentsStore = defineStore('presents', {
+  state: () => ({
+    presents: [] as Present[],
+    isLoading: false,
+    error: null as string | null
+  }),
+  actions: {
+    async fetchPresents(userId?: number) {
+      this.isLoading = true
+      try {
+        const response = await customAxios.get(`/presents${userId ? `?user_id=${userId}` : ''}`)
+        this.presents = response.data.presents
+      } catch (error) {
+        console.error('Error fetching presents:', error)
+        this.error = 'Nie udało się pobrać prezentów'
+      } finally {
+        this.isLoading = false
+      }
+    },
+    async addPresent(present: PresentFormData) {
+      const authStore = useAuthStore()
+      const { toast } = useToast()
+      try {
+        if (!authStore.user?.id) {
+          throw new Error('Brak ID użytkownika')
         }
-      })
-      await fetchPresents()
-      toast({
-        title: 'Sukces',
-        description: 'Prezent został dodany do listy'
-      })
-    } catch (error) {
-      console.error('Error adding present:', error)
-      toast({
-        title: 'Błąd',
-        description: 'Nie udało się dodać prezentu',
-        variant: 'destructive'
-      })
-      throw error
-    }
-  }
 
-  async function updatePresent(id: number, data: PresentFormData) {
-    try {
-      const response = await axios.put(`/presents/${id}`, data)
-      await fetchPresents()
-      toast({
-        title: 'Sukces',
-        description: 'Prezent został zaktualizowany'
-      })
-    } catch (e) {
-      console.error('Error updating present:', e)
-      toast({
-        title: 'Błąd',
-        description: 'Nie udało się zaktualizować prezentu',
-        variant: 'destructive'
-      })
-      throw e
-    }
-  }
+        const presentData = {
+          ...present,
+          url: present.url.startsWith('http') ? present.url : `https://${present.url}`,
+          user_id: authStore.user.id,
+          price: present.price !== undefined ? present.price : null,
+          image_url: present.image_url || null
+        }
+        
+        console.log('Sending present data:', presentData)
+        const response = await customAxios.post('/presents', presentData, {
+          headers: this.getAuthHeaders()
+        })
+        await this.fetchPresents()
+        toast({
+          title: 'Sukces',
+          description: 'Prezent został dodany do listy'
+        })
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message === 'Brak ID użytkownika') {
+          toast({
+            title: 'Błąd',
+            description: 'Nie można dodać prezentu - brak ID użytkownika',
+            variant: 'destructive'
+          })
+          authStore.clearAuth()
+          return
+        }
+        if (isAxiosError(error)) {
+          console.error('Error adding present:', error.response?.data)
+          toast({
+            title: 'Błąd',
+            description: error.response?.data?.message || 'Nie udało się dodać prezentu',
+            variant: 'destructive'
+          })
+        } else {
+          toast({
+            title: 'Błąd',
+            description: 'Nie udało się dodać prezentu',
+            variant: 'destructive'
+          })
+        }
+        throw error
+      }
+    },
+    async updatePresent(id: number, data: PresentFormData) {
+      const authStore = useAuthStore()
+      const { toast } = useToast()
+      try {
+        if (!authStore.user?.id) {
+          throw new Error('Brak ID użytkownika')
+        }
 
-  async function deletePresent(id: number) {
-    try {
-      await axios.delete(`/presents/${id}`)
-      presents.value = presents.value.filter(p => p.id !== id)
-      toast({
-        title: 'Sukces',
-        description: 'Prezent został usunięty'
-      })
-    } catch (e) {
-      console.error('Error deleting present:', e)
-      toast({
-        title: 'Błąd',
-        description: 'Nie udało się usunąć prezentu',
-        variant: 'destructive'
-      })
-    }
-  }
+        const presentData = {
+          ...data,
+          url: data.url.startsWith('http') ? data.url : `https://${data.url}`,
+          user_id: authStore.user.id,
+          price: data.price !== undefined ? data.price : null,
+          image_url: data.image_url || null
+        }
 
-  async function fetchMetadata(url: string) {
-    try {
-      const response = await axios.post('/presents/fetch-metadata', { url })
-      return response.data
-    } catch (e) {
-      console.error('Error fetching metadata:', e)
-      toast({
-        title: 'Błąd',
-        description: 'Nie udało się pobrać informacji o prezencie',
-        variant: 'destructive'
-      })
-      throw e
+        console.log('Updating present with data:', presentData)
+        const response = await customAxios.put(`/presents/${id}`, presentData, {
+          headers: this.getAuthHeaders()
+        })
+        await this.fetchPresents()
+        toast({
+          title: 'Sukces',
+          description: 'Prezent został zaktualizowany'
+        })
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message === 'Brak ID użytkownika') {
+          toast({
+            title: 'Błąd',
+            description: 'Nie można zaktualizować prezentu - brak ID użytkownika',
+            variant: 'destructive'
+          })
+          authStore.clearAuth()
+          return
+        }
+        if (isAxiosError(error)) {
+          console.error('Error updating present:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            headers: error.response?.headers,
+            config: error.config
+          })
+          toast({
+            title: 'Błąd',
+            description: error.response?.data?.message || 'Nie udało się zaktualizować prezentu',
+            variant: 'destructive'
+          })
+        } else {
+          console.error('Non-axios error:', error)
+          toast({
+            title: 'Błąd',
+            description: 'Nie udało się zaktualizować prezentu',
+            variant: 'destructive'
+          })
+        }
+        throw error
+      }
+    },
+    async deletePresent(id: number) {
+      const { toast } = useToast()
+      try {
+        await customAxios.delete(`/presents/${id}`, {
+          headers: this.getAuthHeaders()
+        })
+        this.presents = this.presents.filter(p => p.id !== id)
+        toast({
+          title: 'Sukces',
+          description: 'Prezent został usunięty'
+        })
+      } catch (error: unknown) {
+        console.error('Error deleting present:', error)
+        toast({
+          title: 'Błąd',
+          description: 'Nie udało się usunąć prezentu',
+          variant: 'destructive'
+        })
+      }
+    },
+    async fetchMetadata(url: string) {
+      const { toast } = useToast()
+      try {
+        const response = await customAxios.post('/presents/fetch-metadata', { url })
+        return response.data
+      } catch (error: unknown) {
+        console.error('Error fetching metadata:', error)
+        toast({
+          title: 'Błąd',
+          description: 'Nie udało się pobrać informacji o prezencie',
+          variant: 'destructive'
+        })
+        throw error
+      }
+    },
+    getAuthHeaders() {
+      const authStore = useAuthStore()
+      if (!authStore.token || !authStore.user) {
+        throw new Error('Użytkownik nie jest zalogowany')
+      }
+      return {
+        'Authorization': `Bearer ${authStore.token}`
+      }
     }
-  }
-
-  return {
-    presents,
-    fetchPresents,
-    addPresent,
-    updatePresent,
-    deletePresent,
-    fetchMetadata
   }
 }) 

@@ -43,4 +43,77 @@ class UserController extends Controller
 
         return response()->json(['data' => $users]);
     }
+
+    public function uploadAvatar(Request $request)
+    {
+        try {
+            \Log::info('Rozpoczęcie przesyłania avatara', [
+                'user_id' => auth()->id(),
+                'request_has_file' => $request->hasFile('image'),
+                'content_type' => $request->header('Content-Type')
+            ]);
+
+            $request->validate([
+                'image' => [
+                    'required',
+                    'image',
+                    'max:5120', // max 5MB (5120 = 5 * 1024)
+                    'mimes:jpeg,png,jpg,gif'
+                ]
+            ]);
+
+            if (!$request->hasFile('image')) {
+                \Log::error('Brak pliku w żądaniu');
+                return response()->json(['error' => 'Nie przesłano pliku'], 422);
+            }
+
+            $file = $request->file('image');
+            \Log::info('Informacje o pliku', [
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'error' => $file->getError()
+            ]);
+
+            if (!$file->isValid()) {
+                \Log::error('Plik jest nieprawidłowy', [
+                    'error_code' => $file->getError()
+                ]);
+                return response()->json(['error' => 'Przesłany plik jest uszkodzony'], 422);
+            }
+
+            $path = $file->store('avatars', 'public');
+            \Log::info('Plik zapisany', ['path' => $path]);
+            
+            if (!$path) {
+                \Log::error('Nie udało się zapisać pliku');
+                return response()->json(['error' => 'Nie udało się zapisać pliku'], 500);
+            }
+
+            $user = auth()->user();
+            $oldAvatarUrl = $user->avatar_url;
+            $user->avatar_url = asset('storage/' . $path);
+            $user->save();
+
+            \Log::info('Avatar zaktualizowany', [
+                'old_url' => $oldAvatarUrl,
+                'new_url' => $user->avatar_url
+            ]);
+
+            return response()->json([
+                'url' => $user->avatar_url
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Błąd walidacji', [
+                'errors' => $e->errors()
+            ]);
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            \Log::error('Nieoczekiwany błąd przy przesyłaniu avatara', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => 'Nie udało się przesłać avatara: ' . $e->getMessage()], 500);
+        }
+    }
 } 

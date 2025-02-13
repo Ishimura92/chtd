@@ -155,6 +155,7 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await axios.post('/profile', data)
       console.log('Profile update response:', response.data)
       user.value = response.data.user
+      localStorage.setItem('user', JSON.stringify(response.data.user))
       console.log('Updated user in store:', user.value)
     } catch (e) {
       console.error(e)

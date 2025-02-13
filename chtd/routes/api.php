@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/friendships/{id}', [FriendshipController::class, 'destroy']);
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::post('/profile', [ProfileController::class, 'update']);
+    Route::post('/profile/avatar', [UserController::class, 'uploadAvatar']);
     Route::get('/presents', [PresentController::class, 'index']);
     Route::post('/presents', [PresentController::class, 'store']);
     Route::put('/presents/{present}', [PresentController::class, 'update']);

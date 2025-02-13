@@ -6,55 +6,79 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { usePresentsStore } from '@/stores/presents'
 import { useToast } from '@/components/ui/toast/use-toast'
-import axios from 'axios'
+import customAxios from '@/lib/axios'
+import type { Present, PresentFormData } from '@/types/presents'
 
-const props = defineProps<{
+interface Props {
   editMode?: boolean
-  initialData?: any
-}>()
+  initialData?: Present
+}
 
+const props = defineProps<Props>()
 const emit = defineEmits(['close'])
 const presentsStore = usePresentsStore()
 const { toast } = useToast()
 
-const formData = ref({
+const formData = ref<PresentFormData>({
   name: props.initialData?.name || '',
   url: props.initialData?.url || '',
-  image_url: props.initialData?.image_url || '',
-  price: props.initialData?.price || '',
-  description: props.initialData?.description || ''
+  image_url: props.initialData?.image_url || null,
+  price: props.initialData?.price || null,
+  description: props.initialData?.description || null
 })
 
 const isLoading = ref(false)
 const imagePreview = ref<string | null>(null)
 
+// Ustaw podgląd zdjęcia jeśli jest w initialData
+if (props.initialData?.image_url) {
+  imagePreview.value = props.initialData.image_url
+}
+
+function clearImage() {
+  imagePreview.value = null
+  formData.value.image_url = null
+}
+
 // Obsługa przesyłania obrazka
-function handleImageUpload(event: Event) {
+async function handleImageUpload(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      imagePreview.value = e.target?.result as string
-      formData.value.image_url = e.target?.result as string
+    try {
+      const imageFormData = new FormData()
+      imageFormData.append('image', file)
+      
+      const response = await customAxios.post('/upload-image', imageFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
+      imagePreview.value = URL.createObjectURL(file)
+      formData.value.image_url = response.data.url
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      toast({
+        title: 'Błąd',
+        description: 'Nie udało się przesłać zdjęcia',
+        variant: 'destructive'
+      })
     }
-    reader.readAsDataURL(file)
   }
 }
 
 async function handleSubmit() {
   try {
-    if (props.editMode) {
-      await presentsStore.updatePresent(props.initialData.id, formData.value)
-      toast({
-        title: 'Sukces',
-        description: 'Prezent został zaktualizowany'
-      })
+    isLoading.value = true
+    const data: PresentFormData = {
+      ...formData.value,
+      price: formData.value.price ? Number(formData.value.price) : null
+    }
+
+    if (props.editMode && props.initialData) {
+      await presentsStore.updatePresent(props.initialData.id, data)
     } else {
-      await presentsStore.addPresent(formData.value)
-      toast({
-        title: 'Sukces',
-        description: 'Prezent został dodany do listy'
-      })
+      await presentsStore.addPresent(data)
     }
     emit('close')
   } catch (error) {
@@ -63,6 +87,8 @@ async function handleSubmit() {
       description: 'Nie udało się zapisać prezentu',
       variant: 'destructive'
     })
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
@@ -77,7 +103,10 @@ async function handleSubmit() {
           id="url" 
           v-model="formData.url" 
           placeholder="https://..."
+          type="url"
+          pattern="https?://.+"
           :disabled="isLoading"
+          required
         />
       </div>
 
@@ -88,6 +117,7 @@ async function handleSubmit() {
           v-model="formData.name" 
           placeholder="Nazwa prezentu"
           :disabled="isLoading"
+          required
         />
       </div>
 
@@ -96,9 +126,10 @@ async function handleSubmit() {
         <div class="relative">
           <Input 
             id="price" 
-            v-model="formData.price" 
+            v-model="formData.price"
             type="number" 
             step="0.01"
+            min="0"
             placeholder="0.00"
             :disabled="isLoading"
             class="pr-8"
@@ -136,12 +167,24 @@ async function handleSubmit() {
           <div v-else class="py-8">
             <p class="text-muted-foreground">Brak zdjęcia</p>
           </div>
-          <Input 
-            type="file" 
-            accept="image/*" 
-            @change="handleImageUpload"
-            class="mt-2"
-          />
+          <div class="flex gap-2 mt-2">
+            <Input 
+              type="file" 
+              accept="image/*" 
+              @change="handleImageUpload"
+            >
+              <span>{{ imagePreview ? 'Zmień' : 'Wybierz plik' }}</span>
+            </Input>
+            <Button
+              v-if="imagePreview"
+              type="button"
+              variant="outline"
+              size="icon"
+              @click="clearImage"
+            >
+              <i class="i-lucide-trash-2 h-4 w-4 text-muted-foreground" />
+            </Button>
+          </div>
           <p class="text-sm text-muted-foreground mt-2">
             Zdjęcie zostanie automatycznie pobrane z linku lub możesz dodać własne
           </p>

@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
 import { Link } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useFriendsStore } from '@/stores/friends'
@@ -112,10 +112,12 @@ async function acceptRequest(userId: number) {
       <!-- Results -->
       <div v-else-if="searchResults.length" class="space-y-4">
         <div v-for="user in searchResults" :key="user.id" class="flex items-center gap-3">
-          <Avatar class="h-10 w-10">
-            <AvatarImage :src="user.avatar" />
-            <AvatarFallback>{{ user.name[0] }}{{ user.surname[0] }}</AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            :name="user.name"
+            :surname="user.surname"
+            :avatar-url="user.avatar || user.avatar_url"
+            className="h-10 w-10"
+          />
           <div class="flex-1">
             <div class="font-medium">{{ user.name }} {{ user.surname }}</div>
             <div v-if="user.friendshipStatus?.isReceived" class="text-sm text-muted-foreground">

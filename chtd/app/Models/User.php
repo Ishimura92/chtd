@@ -73,7 +73,7 @@ class User extends Authenticatable
     }
 
     // Wszystkie znajomości (jako user1 lub user2)
-    public function friendships()
+    public function friendships(): HasMany
     {
         return $this->hasMany(Friendship::class, 'user_id_1')
             ->orWhere('user_id_2', $this->id);
@@ -87,13 +87,13 @@ class User extends Authenticatable
             ->exists();
     }
 
-    public function friendshipRequestsReceived()
+    public function friendshipRequestsReceived(): HasMany
     {
         return $this->hasMany(Friendship::class, 'user_id_2')
             ->where('status', 'pending');
     }
 
-    public function presents()
+    public function presents(): HasMany
     {
         return $this->hasMany(Present::class);
     }

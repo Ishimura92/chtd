@@ -5,16 +5,34 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/components/ui/toast/use-toast'
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
-import { getAvatarColor } from '@/lib/utils'
+import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
 import { format, parseISO } from 'date-fns'
+import { Cropper, CircleStencil } from 'vue-advanced-cropper'
+import 'vue-advanced-cropper/dist/style.css'
+import Modal from '@/components/ui/modal/Modal.vue'
+import customAxios from '@/lib/axios'
+import { isAxiosError } from 'axios'
+import type { AxiosError } from 'axios'
 
 const auth = useAuthStore()
 const { toast } = useToast()
+const emit = defineEmits<{
+  (e: 'settings-updated'): void
+}>()
+
+const showAvatarModal = ref(false)
+const imageRef = ref<any>(null)
+const selectedFile = ref<File | null>(null)
+
+function getFileUrl(file: File | null) {
+  return file ? URL.createObjectURL(file) : ''
+}
 
 onMounted(async () => {
   try {
     await auth.fetchUserProfile()
+    console.log('Avatar URL:', auth.user?.avatar_url)
+    console.log('Form data:', form.value)
   } catch (e) {
     toast({
       title: 'Błąd',
@@ -63,6 +81,7 @@ const formData = ref({
 
 // Aktualizuj formData gdy zmienia się form
 watch(() => form.value, (newForm) => {
+  console.log('Form updated:', newForm)
   formData.value = { ...newForm }
 }, { immediate: true })
 
@@ -72,18 +91,10 @@ const hasChanges = computed(() => {
   return JSON.stringify(formData.value) !== initialForm.value
 })
 
-const getInitials = (name?: string, surname?: string) => {
-  return `${name?.[0] || ''}${surname?.[0] || ''}`
-}
-
-const getAvatarColorClass = computed(() => {
-  if (!form.value.name) return ''
-  return getAvatarColor(form.value.name)
-})
-
 async function handleSubmit() {
   try {
     await auth.updateProfile(formData.value)
+    emit('settings-updated')
     toast({
       title: 'Sukces',
       description: 'Twoje dane zostały zaktualizowane'
@@ -96,21 +107,135 @@ async function handleSubmit() {
     })
   }
 }
+
+function cleanupResources() {
+  if (selectedFile.value) {
+    URL.revokeObjectURL(getFileUrl(selectedFile.value))
+  }
+  selectedFile.value = null
+  imageRef.value = null
+  showAvatarModal.value = false
+}
+
+function handleAvatarUpload(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (file) {
+    selectedFile.value = file
+    showAvatarModal.value = true;
+    (event.target as HTMLInputElement).value = ''
+  }
+}
+
+async function saveCroppedAvatar() {
+  if (!imageRef.value) {
+    console.error('Brak referencji do croppera')
+    return
+  }
+  
+  try {
+    const { coordinates, canvas } = imageRef.value.getResult()
+    console.log('Cropper result:', { coordinates })
+    
+    // Konwertuj canvas na blob
+    canvas.toBlob(async (blob: Blob) => {
+      try {
+        console.log('Przygotowanie pliku:', {
+          type: blob.type,
+          size: blob.size
+        })
+
+        const imageFormData = new FormData()
+        imageFormData.append('image', blob, 'avatar.png')
+        
+        console.log('Wysyłanie avatara na serwer...')
+        
+        const response = await customAxios.post('/profile/avatar', imageFormData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json'
+          },
+          timeout: 30000,
+          validateStatus: (status) => {
+            return status >= 200 && status < 300
+          }
+        })
+        
+        console.log('Odpowiedź z serwera:', response.data)
+        
+        if (!response.data.url) {
+          throw new Error('Brak URL w odpowiedzi z serwera')
+        }
+        
+        formData.value.avatar_url = response.data.url
+        console.log('Zaktualizowano formData z nowym avatarem:', formData.value)
+        
+        await handleSubmit()
+        console.log('Profil zaktualizowany, nowy auth.user:', auth.user)
+        
+        cleanupResources()
+        
+        toast({
+          title: 'Sukces',
+          description: 'Avatar został zaktualizowany'
+        })
+      } catch (error: unknown) {
+        console.error('Błąd podczas wysyłania avatara:', {
+          error,
+          response: isAxiosError(error) ? error.response?.data : undefined,
+          status: isAxiosError(error) ? error.response?.status : undefined
+        })
+
+        let errorMessage = 'Nie udało się zapisać avatara'
+        
+        if (isAxiosError(error)) {
+          if (error.response?.data?.error) {
+            errorMessage = error.response.data.error
+          } else if (error.response?.data?.errors) {
+            errorMessage = Object.values(error.response.data.errors).flat().join(', ')
+          } else if (error.code === 'ECONNABORTED') {
+            errorMessage = 'Przekroczono limit czasu połączenia'
+          }
+        }
+
+        toast({
+          title: 'Błąd',
+          description: errorMessage,
+          variant: 'destructive'
+        })
+      }
+    }, 'image/png', 0.9)
+  } catch (error: unknown) {
+    console.error('Błąd podczas przygotowywania avatara:', error)
+    toast({
+      title: 'Błąd',
+      description: 'Nie udało się przetworzyć zdjęcia',
+      variant: 'destructive'
+    })
+  }
+}
 </script>
 
 <template>
   <form @submit.prevent="handleSubmit" class="space-y-6">
     <div class="space-y-4">
       <div class="flex items-center gap-4">
-        <Avatar class="h-24 w-24">
-          <AvatarImage :src="form.avatar_url" />
-          <AvatarFallback :class="getAvatarColorClass" size="lg">
-            {{ getInitials(form.name, form.surname) }}
-          </AvatarFallback>
-        </Avatar>
-        <Button type="button" variant="outline">
+        <UserAvatar
+          :name="form.name"
+          :surname="form.surname"
+          :avatar-url="form.avatar_url"
+          size="lg"
+          className="h-24 w-24"
+        />
+        <Button type="button" variant="outline" @click="$refs.avatarInput.click()">
           Zmień avatar
         </Button>
+        <input
+          ref="avatarInput"
+          type="file"
+          accept="image/*"
+          class="hidden"
+          @change="handleAvatarUpload"
+        />
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
@@ -155,4 +280,30 @@ async function handleSubmit() {
       Zapisz zmiany
     </Button>
   </form>
+
+  <!-- Modal z cropperem -->
+  <Modal
+    :show="Boolean(showAvatarModal)"
+    title="Dostosuj zdjęcie profilowe"
+    @close="cleanupResources"
+  >
+    <div class="space-y-4">
+      <Cropper
+        v-if="selectedFile"
+        ref="imageRef"
+        :stencil-props="{ aspectRatio: 1 }"
+        :stencil-component="CircleStencil"
+        :src="getFileUrl(selectedFile)"
+        class="h-[400px]"
+      />
+      <div class="flex justify-end gap-2">
+        <Button variant="outline" @click="cleanupResources">
+          Anuluj
+        </Button>
+        <Button @click="saveCroppedAvatar">
+          Zapisz
+        </Button>
+      </div>
+    </div>
+  </Modal>
 </template> 

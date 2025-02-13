@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button'
 import { Pencil, Trash2 } from 'lucide-vue-next'
+import { ref } from 'vue'
+import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
 
 defineProps<{
   id: number
   name: string
   url: string
   image_url?: string
-  price?: number
+  price?: string
   description?: string
+  showActions?: boolean
 }>()
 
 const emit = defineEmits(['edit', 'delete'])
@@ -38,7 +41,7 @@ const emit = defineEmits(['edit', 'delete'])
       </a>
     </div>
 
-    <div class="flex flex-col gap-2">
+    <div v-if="showActions" class="flex flex-col gap-2">
       <Button variant="ghost" size="icon" @click="emit('edit')">
         <Pencil class="h-4 w-4" />
       </Button>
