@@ -5,6 +5,10 @@ import RegisterView from '../views/RegisterView.vue'
 import LoginView from '../views/LoginView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import FindFriendsView from '@/views/FindFriendsView.vue'
+import WantedPresentsTab from '@/components/dashboard/tabs/WantedPresentsTab.vue'
+import SettingsTab from '@/components/dashboard/tabs/SettingsTab.vue'
+import IdeasTab from '@/components/dashboard/tabs/IdeasTab.vue'
+import KidsTab from '@/components/dashboard/tabs/KidsTab.vue'
 
 // Definiujemy typy dla meta danych trasy
 declare module 'vue-router' {
@@ -60,7 +64,33 @@ const router = createRouter({
       meta: { 
         requiresAuth: true,
         title: 'Dashboard'
-      }
+      },
+      children: [
+        {
+          path: '',
+          redirect: { name: 'wanted-presents' }
+        },
+        {
+          path: 'wanted-presents',
+          name: 'wanted-presents',
+          component: WantedPresentsTab
+        },
+        {
+          path: 'ideas-for-others',
+          name: 'ideas-for-others',
+          component: IdeasTab
+        },
+        {
+          path: 'my-children',
+          name: 'my-children',
+          component: KidsTab
+        },
+        {
+          path: 'settings',
+          name: 'settings',
+          component: SettingsTab
+        }
+      ]
     },
     {
       path: '/find-friends',

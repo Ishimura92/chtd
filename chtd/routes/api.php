@@ -10,6 +10,8 @@ use App\Http\Controllers\FriendRequestController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FriendshipController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PresentController;
+use App\Http\Controllers\Api\MetadataController;
 
 Route::post('/register', [RegisterController::class, 'register']);
 Route::get('/test', function() {
@@ -29,4 +31,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/friendships/{id}', [FriendshipController::class, 'destroy']);
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::post('/profile', [ProfileController::class, 'update']);
+    Route::get('/presents', [PresentController::class, 'index']);
+    Route::post('/presents', [PresentController::class, 'store']);
+    Route::put('/presents/{present}', [PresentController::class, 'update']);
+    Route::delete('/presents/{present}', [PresentController::class, 'destroy']);
+    Route::post('/presents/fetch-metadata', [PresentController::class, 'fetchMetadata']);
+    Route::post('/metadata', [MetadataController::class, 'fetch']);
+    Route::post('/upload-image', [PresentController::class, 'uploadImage']);
 }); 

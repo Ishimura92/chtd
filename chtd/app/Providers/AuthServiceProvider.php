@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use App\Models\Present;
+use App\Policies\PresentPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -11,7 +13,9 @@ class AuthServiceProvider extends ServiceProvider
      *
      * @var array<class-string, class-string>
      */
-    protected $policies = [];
+    protected $policies = [
+        Present::class => PresentPolicy::class,
+    ];
 
     /**
      * Register any authentication / authorization services.

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Gift, Users, Settings, MoreVertical, Trash2 } from 'lucide-vue-next'
@@ -14,18 +15,33 @@ import { useFriendsStore } from '@/stores/friends'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
+const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const friends = useFriendsStore()
 const { toast } = useToast()
 
-// Aktywna zakładka
-const activeTab = ref('wants')
-
 const tabs = [
-  { id: 'wants', label: 'Chcę dostać', icon: Gift },
-  { id: 'ideas', label: 'Pomysły dla bliskich', icon: Gift },
-  { id: 'kids', label: 'Moje dzieci', icon: Users },
-  { id: 'settings', label: 'Ustawienia', icon: Settings }
+  {
+    title: 'Chcę dostać',
+    route: { name: 'wanted-presents' },
+    icon: Gift
+  },
+  {
+    title: 'Pomysły dla bliskich',
+    route: { name: 'ideas-for-others' },
+    icon: Gift
+  },
+  {
+    title: 'Moje dzieci',
+    route: { name: 'my-children' },
+    icon: Users
+  },
+  {
+    title: 'Ustawienia',
+    route: { name: 'settings' },
+    icon: Settings
+  }
 ]
 
 const getInitials = (name?: string, surname?: string) => {
@@ -201,25 +217,22 @@ async function removeFriend(friendId: number) {
         <nav class="flex gap-4">
           <button
             v-for="tab in tabs"
-            :key="tab.id"
-            @click="activeTab = tab.id"
+            :key="tab.title"
+            @click="router.push(tab.route)"
             class="px-4 py-2 -mb-px flex items-center gap-2"
             :class="{
-              'border-b-2 border-primary font-medium': activeTab === tab.id,
-              'text-muted-foreground': activeTab !== tab.id
+              'border-b-2 border-primary font-medium': route.name === tab.route.name,
+              'text-muted-foreground': route.name !== tab.route.name
             }"
           >
             <component :is="tab.icon" class="h-4 w-4" />
-            {{ tab.label }}
+            {{ tab.title }}
           </button>
         </nav>
       </div>
 
-      <!-- Zawartość zakładki -->
-      <component :is="activeTab === 'wants' ? WantsTab :
-                    activeTab === 'ideas' ? IdeasTab :
-                    activeTab === 'kids' ? KidsTab :
-                    SettingsTab" />
+      <!-- Router view dla zawartości zakładek -->
+      <router-view />
     </div>
   </div>
 </template> 
