@@ -215,7 +215,7 @@ async function saveCroppedAvatar() {
         <UserAvatar
           :name="form.name"
           :surname="form.surname"
-          :avatar="form.avatar_url"
+          :avatar_url="form.avatar_url"
           size="lg"
           className="h-24 w-24"
         />

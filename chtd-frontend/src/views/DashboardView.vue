@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
-import { Gift, Users, Settings, MoreVertical, Trash2, Flower } from 'lucide-vue-next'
+import { Gift, Users, Settings, MoreVertical, Trash2, Flower, Lightbulb } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import type { User } from '@/stores/auth'
 import { getAvatarColor } from '@/lib/utils'
@@ -36,7 +36,7 @@ const tabs = [
   {
     title: 'Pomysły dla bliskich',
     route: { name: 'ideas-for-others' },
-    icon: Gift
+    icon: Lightbulb
   },
   {
     title: 'Moje dzieci',
