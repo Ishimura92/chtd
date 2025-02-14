@@ -1,28 +1,61 @@
 URUCHOMIENIE PROJEKTU CHTD
 ==========================
 
-1. URUCHOMIENIE ŚRODOWISKA
--------------------------
-# Przejdź do głównego katalogu projektu
+0. WYMAGANIA WSTĘPNE
+-------------------
+1. Zainstaluj Git: https://git-scm.com/downloads
+2. Zainstaluj Docker Desktop: https://www.docker.com/products/docker-desktop/
+3. Zainstaluj Node.js (wersja LTS): https://nodejs.org/
+4. Zainstaluj Cursor: https://cursor.sh/
+5. Upewnij się, że Docker Desktop jest uruchomiony
+
+1. POBRANIE PROJEKTU
+-------------------
+# Sklonuj repozytorium
+git clone https://github.com/Ishimura92/chtd.git
 cd chtd
 
-# Uruchom wszystkie kontenery
+2. KONFIGURACJA ŚRODOWISKA
+-------------------------
+# Skopiuj pliki konfiguracyjne
+cp .env.example .env
+cd chtd-frontend
+cp .env.example .env
+
+# Wróć do głównego katalogu
+cd ..
+
+3. URUCHOMIENIE ŚRODOWISKA
+-------------------------
+# W tym momencie masz dwie opcje:
+
+OPCJA 1 (zalecana) - Użyj Cursor AI:
+1. Otwórz projekt w Cursor
+2. Poproś asystenta o uruchomienie projektu
+3. Asystent przeprowadzi Cię przez pozostałe kroki automatycznie
+
+OPCJA 2 (manualna) - Wykonaj kroki ręcznie:
+# Uruchom kontenery
 docker compose up -d
 
+# Zainstaluj zależności PHP
+docker compose exec app composer install
 
-2. SPRAWDZENIE STATUSU
----------------------
-# Sprawdź czy wszystkie kontenery działają
-docker compose ps
+# Wykonaj migracje bazy danych
+docker compose exec app php artisan migrate
 
+# Zainstaluj zależności frontendowe
+cd chtd-frontend
+npm install
+npm run dev
 
-3. DOSTĘP DO APLIKACJI
+4. DOSTĘP DO APLIKACJI
 ---------------------
 Frontend: http://localhost:5173
 Backend: http://localhost:8000
+PhpMyAdmin: http://localhost:8080
 
-
-4. ROZWIĄZYWANIE PROBLEMÓW
+5. ROZWIĄZYWANIE PROBLEMÓW
 -------------------------
 # Zobacz logi wszystkich kontenerów
 docker compose logs
@@ -30,9 +63,22 @@ docker compose logs
 # Zobacz logi konkretnego kontenera
 docker compose logs app      # backend
 docker compose logs frontend # frontend
+docker compose logs db      # baza danych
 
+# Typowe problemy:
+1. Jeśli porty są zajęte:
+   - Sprawdź czy nie masz uruchomionych innych kontenerów
+   - Zatrzymaj lokalne usługi MySQL/Apache jeśli są uruchomione
+   - Możesz zmienić porty w docker-compose.yml
 
-5. ZATRZYMANIE ŚRODOWISKA
+2. Jeśli masz problemy z uprawnieniami:
+   - Windows: Upewnij się, że Docker Desktop ma dostęp do folderu projektu
+   - Linux/Mac: Może być potrzebne wykonanie `sudo chown -R $USER:$USER .`
+
+6. ZATRZYMANIE ŚRODOWISKA
 ------------------------
 # Zatrzymaj wszystkie kontenery
-docker compose down 
+docker compose down
+
+# Aby usunąć również wolumeny (baza danych)
+docker compose down -v 

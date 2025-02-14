@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use App\Models\Present;
 use App\Policies\PresentPolicy;
+use App\Models\GiftIdea;
+use App\Policies\GiftIdeaPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -15,6 +17,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         Present::class => PresentPolicy::class,
+        GiftIdea::class => GiftIdeaPolicy::class,
     ];
 
     /**

@@ -12,6 +12,8 @@ use App\Http\Controllers\FriendshipController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PresentController;
 use App\Http\Controllers\Api\MetadataController;
+use App\Http\Controllers\GiftIdeaController;
+use App\Http\Controllers\ImageUploadController;
 
 Route::post('/register', [RegisterController::class, 'register']);
 Route::get('/test', function() {
@@ -38,5 +40,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/presents/{present}', [PresentController::class, 'destroy']);
     Route::post('/presents/fetch-metadata', [PresentController::class, 'fetchMetadata']);
     Route::post('/metadata', [MetadataController::class, 'fetch']);
-    Route::post('/upload-image', [PresentController::class, 'uploadImage']);
+    Route::post('/upload-image', [ImageUploadController::class, 'store']);
+    Route::apiResource('presents', PresentController::class);
+    Route::apiResource('gift-ideas', GiftIdeaController::class);
+    Route::post('profile/avatar', [ProfileController::class, 'updateAvatar']);
 }); 

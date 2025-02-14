@@ -97,4 +97,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Present::class);
     }
+
+    public function giftIdeas(): HasMany
+    {
+        return $this->hasMany(GiftIdea::class);
+    }
 } 
