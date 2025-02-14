@@ -3,15 +3,21 @@ import { Button } from '@/components/ui/button'
 import { Pencil, Trash2 } from 'lucide-vue-next'
 import { ref } from 'vue'
 import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
+import type { Present } from '@/types/presents'
 
 defineProps<{
   id: number
   name: string
   url: string
-  image_url?: string
-  price?: string
-  description?: string
+  image_url: string | null
+  price: string | number | null
+  description: string | null
   showActions?: boolean
+  user?: {
+    name: string
+    surname: string
+    avatar_url?: string | null
+  }
 }>()
 
 const emit = defineEmits(['edit', 'delete'])
@@ -24,9 +30,18 @@ const emit = defineEmits(['edit', 'delete'])
     </div>
     
     <div class="flex-grow space-y-2">
-      <h3 class="font-semibold">{{ name }}</h3>
-      <p v-if="price" class="text-sm text-muted-foreground">
-        {{ price }} zł
+      <div class="flex items-center gap-2">
+        <h3 class="font-semibold">{{ name }}</h3>
+        <UserAvatar
+          v-if="user"
+          :name="user.name"
+          :surname="user.surname"
+          :avatar_url="user.avatar_url || undefined"
+          className="h-6 w-6"
+        />
+      </div>
+      <p v-if="price !== null" class="text-sm text-muted-foreground">
+        {{ typeof price === 'number' ? price.toFixed(2) : Number(price).toFixed(2) }} zł
       </p>
       <p v-if="description" class="text-sm text-muted-foreground">
         {{ description }}

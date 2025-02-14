@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import axios from '@/lib/axios' 
+import axios from '@/lib/axios'
+import type { User } from './auth'
 
 interface FriendRequest {
   id: number
   name: string
+  surname: string
   avatar?: string
   email: string
 }
@@ -20,12 +22,7 @@ interface SearchResult {
   } | null
 }
 
-interface Friend {
-  id: number
-  name: string
-  surname: string
-  avatar?: string
-}
+type Friend = User
 
 export const useFriendsStore = defineStore('friends', () => {
   const friendRequests = ref<FriendRequest[]>([])

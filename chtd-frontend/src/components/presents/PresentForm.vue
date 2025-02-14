@@ -20,12 +20,12 @@ const presentsStore = usePresentsStore()
 const { toast } = useToast()
 
 const formData = ref<PresentFormData>({
-  name: props.initialData?.name || '',
-  url: props.initialData?.url || '',
-  image_url: props.initialData?.image_url || null,
-  price: props.initialData?.price || null,
-  description: props.initialData?.description || null
-})
+  name: props.initialData?.name ?? '',
+  url: props.initialData?.url ?? '',
+  image_url: props.initialData?.image_url ?? null,
+  price: props.initialData?.price?.toString() ?? '',
+  description: props.initialData?.description ?? ''
+} as PresentFormData)
 
 const isLoading = ref(false)
 const imagePreview = ref<string | null>(null)
@@ -72,7 +72,8 @@ async function handleSubmit() {
     isLoading.value = true
     const data: PresentFormData = {
       ...formData.value,
-      price: formData.value.price ? Number(formData.value.price) : null
+      price: formData.value.price ? Number(formData.value.price) : undefined,
+      description: formData.value.description || undefined
     }
 
     if (props.editMode && props.initialData) {

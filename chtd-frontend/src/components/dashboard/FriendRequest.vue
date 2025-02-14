@@ -8,9 +8,9 @@ import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
 const props = defineProps<{
   id: number
   name: string
-  avatar?: string
   surname: string
-  avatar_url?: string
+  avatar?: string
+  email: string
 }>()
 
 const friends = useFriendsStore()
@@ -50,22 +50,23 @@ async function handleReject() {
 </script>
 
 <template>
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-3 p-2 rounded-lg">
     <UserAvatar
       :name="name"
       :surname="surname"
-      :avatar-url="avatar || avatar_url"
+      :avatar="avatar"
       className="h-10 w-10"
     />
     <div class="flex-1">
-      <div class="font-medium">{{ name }}</div>
+      <div class="font-medium">{{ name }} {{ surname }}</div>
+      <div class="text-sm text-muted-foreground">{{ email }}</div>
     </div>
     <div class="flex gap-2">
-      <Button variant="ghost" size="sm" class="text-red-500" @click="handleReject">
-        Odrzuć
-      </Button>
-      <Button size="sm" class="bg-green-500 hover:bg-green-600 text-white" @click="handleAccept">
+      <Button variant="outline" size="sm" @click="handleAccept">
         Akceptuj
+      </Button>
+      <Button variant="ghost" size="sm" @click="handleReject">
+        Odrzuć
       </Button>
     </div>
   </div>

@@ -6,7 +6,7 @@ import { getAvatarColor } from '@/lib/utils'
 interface Props {
   name?: string
   surname?: string
-  avatarUrl?: string
+  avatar_url?: string
   size?: 'sm' | 'lg'
   className?: string
 }
@@ -28,9 +28,9 @@ const getAvatarColorClass = computed(() => {
 
 <template>
   <Avatar :class="className">
-    <AvatarImage :src="avatarUrl" />
+    <AvatarImage :src="avatar_url" />
     <AvatarFallback 
-      v-if="!avatarUrl" 
+      v-if="!avatar_url" 
       :class="getAvatarColorClass" 
       :size="size"
     >

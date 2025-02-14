@@ -23,6 +23,7 @@ const emit = defineEmits<{
 const showAvatarModal = ref(false)
 const imageRef = ref<any>(null)
 const selectedFile = ref<File | null>(null)
+const cropError = ref<string | null>(null)
 
 function getFileUrl(file: File | null) {
   return file ? URL.createObjectURL(file) : ''
@@ -31,7 +32,7 @@ function getFileUrl(file: File | null) {
 onMounted(async () => {
   try {
     await auth.fetchUserProfile()
-    console.log('Avatar URL:', auth.user?.avatar_url)
+    console.log('Avatar URL:', auth.user?.avatar)
     console.log('Form data:', form.value)
   } catch (e) {
     toast({
@@ -66,7 +67,7 @@ const form = computed(() => ({
   email: auth.user?.email || '',
   birth_date: formatDateForInput(auth.user?.birth_date),
   name_day_date: formatDateForInput(auth.user?.name_day_date),
-  avatar_url: auth.user?.avatar_url || ''
+  avatar_url: auth.user?.avatar || ''
 }))
 
 // Musimy też zmienić sposób obsługi formularza, bo computed jest readonly
@@ -114,6 +115,7 @@ function cleanupResources() {
   }
   selectedFile.value = null
   imageRef.value = null
+  cropError.value = null
   showAvatarModal.value = false
 }
 
@@ -128,11 +130,12 @@ function handleAvatarUpload(event: Event) {
 
 async function saveCroppedAvatar() {
   if (!imageRef.value) {
-    console.error('Brak referencji do croppera')
+    cropError.value = 'Brak referencji do croppera'
     return
   }
   
   try {
+    cropError.value = null
     const { coordinates, canvas } = imageRef.value.getResult()
     console.log('Cropper result:', { coordinates })
     
@@ -197,20 +200,12 @@ async function saveCroppedAvatar() {
           }
         }
 
-        toast({
-          title: 'Błąd',
-          description: errorMessage,
-          variant: 'destructive'
-        })
+        cropError.value = errorMessage
       }
     }, 'image/png', 0.9)
   } catch (error: unknown) {
     console.error('Błąd podczas przygotowywania avatara:', error)
-    toast({
-      title: 'Błąd',
-      description: 'Nie udało się przetworzyć zdjęcia',
-      variant: 'destructive'
-    })
+    cropError.value = 'Nie udało się przetworzyć zdjęcia'
   }
 }
 </script>
@@ -296,11 +291,14 @@ async function saveCroppedAvatar() {
         :src="getFileUrl(selectedFile)"
         class="h-[400px]"
       />
+      <div v-if="cropError" class="p-3 mb-2 text-sm text-destructive bg-destructive/10 rounded-md">
+        {{ cropError }}
+      </div>
       <div class="flex justify-end gap-2">
         <Button variant="outline" @click="cleanupResources">
           Anuluj
         </Button>
-        <Button @click="saveCroppedAvatar">
+        <Button @click="saveCroppedAvatar" :disabled="!!cropError">
           Zapisz
         </Button>
       </div>

@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from '@/lib/axios'
+import type { AxiosError } from 'axios'
+import { isAxiosError } from 'axios'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { useRouter } from 'vue-router'
 
-interface User {
+export interface User {
   id: number
   name: string
   surname: string
@@ -20,7 +22,7 @@ interface ProfileData {
   email: string
   birth_date: string
   name_day_date: string
-  avatar_url: string
+  avatar_url?: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -121,14 +123,15 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const handleAuthError = (error: unknown) => {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 422) {
+    if (isAxiosError(error)) {
+      const axiosError = error as AxiosError
+      if (axiosError.response?.status === 422) {
         toast({
           title: "Błąd walidacji",
           description: "Sprawdź wprowadzone dane.",
           variant: "destructive",
         })
-      } else if (error.response?.status === 401) {
+      } else if (axiosError.response?.status === 401) {
         toast({
           title: "Sesja wygasła",
           description: "Twoja sesja wygasła. Zaloguj się ponownie.",

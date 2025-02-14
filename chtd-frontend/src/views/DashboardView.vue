@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
 import { Gift, Users, Settings, MoreVertical, Trash2, Flower } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import type { User } from '@/stores/auth'
 import { getAvatarColor } from '@/lib/utils'
 import FriendRequest from '@/components/dashboard/FriendRequest.vue'
 import WantsTab from '@/components/dashboard/tabs/WantsTab.vue'
@@ -17,12 +18,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { format } from 'date-fns'
 import { pl } from 'date-fns/locale'
 
+type Friend = User
+
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 const friends = useFriendsStore()
 const { toast } = useToast()
-const activeUser = ref(auth.user)
+const activeUser = ref<Friend | null>(auth.user)
 
 const tabs = [
   {
@@ -91,9 +94,9 @@ async function removeFriend(friendId: number) {
   }
 }
 
-function setActiveUser(user: any) {
+function setActiveUser(user: Friend | null) {
   activeUser.value = user
-  if (user.id !== auth.user?.id) {
+  if (user?.id !== auth.user?.id) {
     router.push({ name: 'wanted-presents' })
   }
 }
@@ -115,7 +118,7 @@ function setActiveUser(user: any) {
             <UserAvatar
               :name="auth.user?.name"
               :surname="auth.user?.surname"
-              :avatar-url="auth.user?.avatar_url"
+              :avatar_url="auth.user?.avatar_url"
               className="h-10 w-10"
             />
             <span class="font-medium">{{ auth.user?.name }} {{ auth.user?.surname }}</span>
@@ -171,7 +174,7 @@ function setActiveUser(user: any) {
               <UserAvatar
                 :name="friend.name"
                 :surname="friend.surname"
-                :avatar-url="friend.avatar_url"
+                :avatar_url="friend.avatar_url"
                 className="h-10 w-10"
               />
               <div class="flex-1">
@@ -211,7 +214,7 @@ function setActiveUser(user: any) {
           <UserAvatar
             :name="activeUser?.name"
             :surname="activeUser?.surname"
-            :avatar-url="activeUser?.avatar_url"
+            :avatar_url="activeUser?.avatar_url"
             size="lg"
             className="h-24 w-24"
           />

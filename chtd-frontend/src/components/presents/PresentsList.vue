@@ -7,17 +7,18 @@ import PresentForm from './PresentForm.vue'
 import { Plus, Gift } from 'lucide-vue-next'
 import Modal from '@/components/ui/modal/Modal.vue'
 import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
+import type { Present } from '@/types/presents'
 
 const presentsStore = usePresentsStore()
 const showAddModal = ref(false)
-const editingPresent = ref<any>(null)
+const editingPresent = ref<Present | null>(null)
 
 const props = defineProps<{
-  presents: any[]
+  presents: Present[]
   isOwner: boolean
   userName?: string
   userSurname?: string
-  userAvatar?: string
+  userAvatar?: string | null
   isLoading?: boolean
 }>()
 
@@ -90,9 +91,10 @@ function handleDelete(id: number) {
           class="w-full h-48 object-cover rounded-t-lg"
         />
         <UserAvatar
+          v-if="present.user"
           :name="present.user.name"
           :surname="present.user.surname"
-          :avatar-url="present.user.avatar_url"
+          :avatar_url="present.user.avatar_url || undefined"
           className="h-10 w-10"
         />
       </PresentCard>

@@ -2,22 +2,34 @@
 import { ref, watch } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
+import { Search } from 'lucide-vue-next'
 import { Link } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useFriendsStore } from '@/stores/friends'
 import { useToast } from '@/components/ui/toast/use-toast'
+import UserAvatar from '@/components/ui/user-avatar/UserAvatar.vue'
+
+interface SearchResult {
+  id: number
+  name: string
+  surname: string
+  avatar_url: string | null
+  friendshipStatus?: {
+    status: 'pending' | 'accepted' | 'rejected'
+    isReceived: boolean
+  }
+}
 
 const auth = useAuthStore()
 const friends = useFriendsStore()
 const { toast } = useToast()
 
 const searchQuery = ref('')
-const searchResults = ref([])
+const searchResults = ref<SearchResult[]>([])
 const isLoading = ref(false)
 
 // Debounced search
-let searchTimeout: NodeJS.Timeout
+let searchTimeout: ReturnType<typeof setTimeout>
 watch(searchQuery, (newQuery) => {
   clearTimeout(searchTimeout)
   if (newQuery.length >= 2) {
@@ -115,7 +127,7 @@ async function acceptRequest(userId: number) {
           <UserAvatar
             :name="user.name"
             :surname="user.surname"
-            :avatar-url="user.avatar || user.avatar_url"
+            :avatar="user.avatar_url || undefined"
             className="h-10 w-10"
           />
           <div class="flex-1">
