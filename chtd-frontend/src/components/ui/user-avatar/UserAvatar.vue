@@ -33,6 +33,7 @@ const getAvatarColorClass = computed(() => {
       v-if="!avatar_url" 
       :class="getAvatarColorClass" 
       :size="size"
+      data-testid="avatar-fallback"
     >
       {{ getInitials }}
     </AvatarFallback>

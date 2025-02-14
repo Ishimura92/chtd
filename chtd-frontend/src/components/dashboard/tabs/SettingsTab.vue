@@ -32,8 +32,6 @@ function getFileUrl(file: File | null) {
 onMounted(async () => {
   try {
     await auth.fetchUserProfile()
-    console.log('Avatar URL:', auth.user?.avatar)
-    console.log('Form data:', form.value)
   } catch (e) {
     toast({
       title: 'Błąd',
@@ -67,7 +65,7 @@ const form = computed(() => ({
   email: auth.user?.email || '',
   birth_date: formatDateForInput(auth.user?.birth_date),
   name_day_date: formatDateForInput(auth.user?.name_day_date),
-  avatar_url: auth.user?.avatar || ''
+  avatar_url: auth.user?.avatar_url || ''
 }))
 
 // Musimy też zmienić sposób obsługi formularza, bo computed jest readonly
@@ -217,7 +215,7 @@ async function saveCroppedAvatar() {
         <UserAvatar
           :name="form.name"
           :surname="form.surname"
-          :avatar-url="form.avatar_url"
+          :avatar="form.avatar_url"
           size="lg"
           className="h-24 w-24"
         />

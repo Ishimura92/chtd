@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { watch } from 'vue'
 import HomeView from '../views/HomeView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -36,7 +37,10 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue')
+      component: () => import('@/views/LoginView.vue'),
+      meta: {
+        isGuestOnly: true
+      }
     },
     {
       path: '/register',
@@ -65,7 +69,8 @@ const router = createRouter({
           name: 'wanted-presents',
           component: WantsTab,
           props: true,
-          alias: ''
+          alias: '',
+          meta: { requiresAuth: true }
         },
         {
           path: 'ideas-for-others',
@@ -117,7 +122,14 @@ router.beforeEach((to, from, next) => {
 
   // Sprawdź czy trasa jest tylko dla gości (niezalogowanych)
   if (to.meta.isGuestOnly && auth.isAuthenticated) {
-    next({ name: 'dashboard' })
+    next({ name: 'wanted-presents' })
+    return
+  }
+
+  // Jeśli użytkownik jest zalogowany i wchodzi na dashboard bez podtrasy,
+  // przekieruj go na wanted-presents
+  if (auth.isAuthenticated && to.path === '/dashboard') {
+    next({ name: 'wanted-presents' })
     return
   }
 

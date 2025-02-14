@@ -107,9 +107,14 @@ export const useAuthStore = defineStore('auth', () => {
         description: "Do zobaczenia!",
         variant: "default",
       })
+
+      // Najpierw przekieruj do strony logowania
+      await router.push('/login')
+      
+      // Dopiero potem wyczyść dane autoryzacji
+      clearAuth()
     } catch (error) {
       handleAuthError(error)
-    } finally {
       clearAuth()
       router.push('/login')
     }

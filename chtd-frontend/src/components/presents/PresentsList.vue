@@ -47,7 +47,7 @@ function handleDelete(id: number) {
 
     <!-- Empty state -->
     <div 
-      v-if="!presentsStore.presents.length" 
+      v-if="!presents.length" 
       class="text-center py-12 border-2 border-dashed rounded-lg"
     >
       <Gift class="h-12 w-12 mx-auto text-muted-foreground" />
@@ -78,12 +78,13 @@ function handleDelete(id: number) {
     <!-- Lista prezentów -->
     <div v-else class="space-y-4">
       <PresentCard
-        v-for="present in presentsStore.presents"
+        v-for="present in presents"
         :key="present.id"
         v-bind="present"
         :show-actions="isOwner"
         @edit="editingPresent = present"
         @delete="handleDelete(present.id)"
+        data-test="present-card"
       >
         <img 
           :src="present.image_url || '/images/gift-placeholder.png'" 

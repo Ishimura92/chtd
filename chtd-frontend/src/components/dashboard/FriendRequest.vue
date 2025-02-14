@@ -54,7 +54,7 @@ async function handleReject() {
     <UserAvatar
       :name="name"
       :surname="surname"
-      :avatar="avatar"
+      :avatar_url="avatar"
       className="h-10 w-10"
     />
     <div class="flex-1">
